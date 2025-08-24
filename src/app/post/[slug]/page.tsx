@@ -1,25 +1,45 @@
-// src/app/post/[slug]/page.tsx
-
 import { client } from '@/lib/sanity'
 import { notFound } from 'next/navigation'
-import { type Metadata } from 'next'
+import type { Metadata } from 'next'
 
-// ✅ Use official PageProps type
-import type { InferGetStaticPropsType } from 'next'
+// Define the Post type (so TypeScript knows what fields exist)
+type Post = {
+  title: string
+  content?: string
+  excerpt?: string
+  slug: { current: string }
+}
 
-// This tells Next.js what pages to statically generate
+// Generate static paths
 export async function generateStaticParams() {
   const slugs: string[] = await client.fetch(`*[_type == "post"].slug.current`)
   return slugs.map((slug) => ({ slug }))
 }
 
-// ✅ Use the correct inline typing here
-export default async function PostPage({
+// Generate SEO metadata for each post
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string }
+}): Promise<Metadata> {
+  const post: Post | null = await client.fetch(
+    `*[_type == "post" && slug.current == $slug][0]`,
+    { slug: params.slug }
+  )
+  if (!post) return {}
+  return {
+    title: post.title,
+    description: post.excerpt || 'Post from my blog',
+  }
+}
+
+// The actual page
+export default async function Page({
   params,
 }: {
   params: { slug: string }
 }) {
-  const post = await client.fetch(
+  const post: Post | null = await client.fetch(
     `*[_type == "post" && slug.current == $slug][0]`,
     { slug: params.slug }
   )
@@ -27,9 +47,9 @@ export default async function PostPage({
   if (!post) return notFound()
 
   return (
-    <main>
-      <h1>{post.title}</h1>
-      <p>{post.body}</p>
-    </main>
+    <article className="prose mx-auto p-6">
+      <h1 className="text-3xl font-bold">{post.title}</h1>
+      {post.content && <p className="mt-4">{post.content}</p>}
+    </article>
   )
 }
