@@ -1,20 +1,20 @@
 // src/app/post/[slug]/page.tsx
-import { client } from '@/lib/sanity' // or your sanity client
+
+import { client } from '@/lib/sanity' // adjust path if needed
 import { notFound } from 'next/navigation'
 
-type Params = {
+type Props = {
   params: {
     slug: string
   }
 }
 
-// Data fetching in app router
 export async function generateStaticParams() {
-  const slugs = await client.fetch(`*[_type == "post"].slug.current`)
-  return slugs.map((slug: string) => ({ slug }))
+  const slugs: string[] = await client.fetch(`*[_type == "post"].slug.current`)
+  return slugs.map(slug => ({ slug }))
 }
 
-export default async function PostPage({ params }: Params) {
+export default async function PostPage({ params }: Props) {
   const post = await client.fetch(
     `*[_type == "post" && slug.current == $slug][0]`,
     { slug: params.slug }
@@ -25,7 +25,7 @@ export default async function PostPage({ params }: Params) {
   return (
     <div>
       <h1>{post.title}</h1>
-      <div>{post.body}</div>
+      <p>{post.body}</p>
     </div>
   )
 }
