@@ -1,6 +1,4 @@
-// src/app/post/[slug]/page.tsx
-
-import { client } from '@/lib/sanity' // adjust path if needed
+import { client } from '@/lib/sanity'
 import { notFound } from 'next/navigation'
 
 type Props = {
@@ -11,7 +9,7 @@ type Props = {
 
 export async function generateStaticParams() {
   const slugs: string[] = await client.fetch(`*[_type == "post"].slug.current`)
-  return slugs.map(slug => ({ slug }))
+  return slugs.map((slug) => ({ slug }))
 }
 
 export default async function PostPage({ params }: Props) {
