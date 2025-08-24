@@ -1,28 +1,15 @@
 import { client } from '@/lib/sanity'
 import { notFound } from 'next/navigation'
-import type { Metadata } from 'next'
 
-// Define the Post type (so TypeScript knows what fields exist)
-type Post = {
-  title: string
-  content?: string
-  excerpt?: string
-  slug: { current: string }
-}
-
-// Generate static paths
+// Pre-generate slugs for static paths
 export async function generateStaticParams() {
-  const slugs: string[] = await client.fetch(`*[_type == "post"].slug.current`)
-  return slugs.map((slug) => ({ slug }))
+  const slugs = await client.fetch(`*[_type == "post"].slug.current`)
+  return slugs.map((slug: string) => ({ slug }))
 }
 
-// Generate SEO metadata for each post
-export async function generateMetadata({
-  params,
-}: {
-  params: { slug: string }
-}): Promise<Metadata> {
-  const post: Post | null = await client.fetch(
+// Optional: Generate SEO metadata
+export async function generateMetadata({ params }: any) {
+  const post = await client.fetch(
     `*[_type == "post" && slug.current == $slug][0]`,
     { slug: params.slug }
   )
@@ -33,13 +20,9 @@ export async function generateMetadata({
   }
 }
 
-// The actual page
-export default async function Page({
-  params,
-}: {
-  params: { slug: string }
-}) {
-  const post: Post | null = await client.fetch(
+// The page itself
+export default async function Page({ params }: any) {
+  const post = await client.fetch(
     `*[_type == "post" && slug.current == $slug][0]`,
     { slug: params.slug }
   )
