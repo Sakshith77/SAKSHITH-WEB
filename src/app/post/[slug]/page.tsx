@@ -1,34 +1,31 @@
-import { client } from "@/lib/sanity";
+// src/app/post/[slug]/page.tsx
+import { client } from '@/lib/sanity' // or your sanity client
+import { notFound } from 'next/navigation'
 
-
-type Post = {
-  title: string;
-  content: string;
-};
-
-export default function PostPage({ post }: { post: Post }) {
-  if (!post) return <h1>Not Found</h1>;
-  return (
-    <div style={{ padding: "20px" }}>
-      <h1>{post.title}</h1>
-      <p>{post.content}</p>
-    </div>
-  );
+type Params = {
+  params: {
+    slug: string
+  }
 }
 
-export async function getStaticPaths() {
-  const paths = await client.fetch(
-    `*[_type == "post" && defined(slug.current)][]{
-      "params": {"slug": slug.current}
-    }`
-  );
-  return { paths, fallback: true };
+// Data fetching in app router
+export async function generateStaticParams() {
+  const slugs = await client.fetch(`*[_type == "post"].slug.current`)
+  return slugs.map((slug: string) => ({ slug }))
 }
 
-export async function getStaticProps({ params }: { params: { slug: string } }) {
+export default async function PostPage({ params }: Params) {
   const post = await client.fetch(
     `*[_type == "post" && slug.current == $slug][0]`,
     { slug: params.slug }
-  );
-  return { props: { post }, revalidate: 10 };
+  )
+
+  if (!post) return notFound()
+
+  return (
+    <div>
+      <h1>{post.title}</h1>
+      <div>{post.body}</div>
+    </div>
+  )
 }
